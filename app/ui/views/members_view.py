@@ -2,9 +2,9 @@
 Members View - Consumer
 Listens to events and updates UI accordingly.
 """
-from PyQt6.QtWidgets import *
-from PyQt6.QtCore import *
-from PyQt6.QtGui import *
+from PySide6.QtWidgets import *
+from PySide6.QtCore import *
+from PySide6.QtGui import *
 import qtawesome as qta
 
 from app.core.event_bus import get_event_bus, Event, EventType
@@ -76,7 +76,7 @@ class MembersView(QWidget):
         header_layout.addStretch()
         
         btn_add = QPushButton(" Thêm Thành Viên")
-        btn_add.setIcon(qta.icon('fa5s.user-plus', color='white'))
+        btn_add.setIcon(QIcon(qta.icon('fa5s.user-plus', color='white').pixmap(16, 16)))
         btn_add.setProperty("primary", True)
         btn_add.clicked.connect(self.on_add_clicked)
         header_layout.addWidget(btn_add)

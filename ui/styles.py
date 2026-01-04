@@ -1,5 +1,5 @@
-from PyQt6.QtWidgets import QApplication
-from PyQt6.QtGui import QFont, QColor, QPalette
+from PySide6.QtWidgets import QApplication
+from PySide6.QtGui import QFont, QColor, QPalette
 
 def APPLY_STYLES(app: QApplication):
     app.setStyle("Fusion")

@@ -1,18 +1,24 @@
-# Script chạy ứng dụng SmartHui tự động
-Write-Host "Đang khởi động SmartHui..." -ForegroundColor Green
+param(
+    [string]$UIType = "QtWidgets"
+)
+
+Write-Host "Đang khởi động SmartHui với giao diện: $UIType" -ForegroundColor Green
 
 # Kiểm tra thư mục hiện tại
 $CurrentDir = Get-Location
 Write-Host "Thư mục làm việc: $CurrentDir"
 
+# Build the command arguments
+$pythonArgs = "main.py --ui $UIType"
+
 # Kiểm tra nếu có môi trường ảo (.venv)
 if (Test-Path ".venv\Scripts\python.exe") {
     Write-Host "Phát hiện môi trường ảo, đang khởi chạy..." -ForegroundColor Cyan
-    & ".\.venv\Scripts\python.exe" "main.py"
+    & ".\.venv\Scripts\python.exe" $pythonArgs
 }
 else {
     Write-Host "Chạy bằng Python hệ thống..." -ForegroundColor Yellow
-    python main.py
+    python $pythonArgs
 }
 
 if ($LASTEXITCODE -ne 0) {

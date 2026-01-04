@@ -1,6 +1,6 @@
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QPushButton, QTextEdit, QSplitter)
-from PyQt6.QtCore import Qt
+from PySide6.QtCore import Qt
 from data_models import AppState
 from services.finance_service import FinanceService
 import json

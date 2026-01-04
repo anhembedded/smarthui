@@ -1,6 +1,6 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGridLayout, QFrame, QGraphicsDropShadowEffect
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGridLayout, QFrame, QGraphicsDropShadowEffect
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor
 from data_models import AppState
 import qtawesome as qta
 

@@ -1,20 +1,18 @@
-import sys
-import os
-from PyQt6.QtWidgets import QApplication
-from ui.main_window import MainWindow
-from ui.styles import APPLY_STYLES
+import argparse
+from ui_factory import QtWidgetsFactory, QMLFactory
 
 def main():
-    app = QApplication(sys.argv)
-    app.setApplicationName("SmartHui - Quản Lý Hụi 4.0")
+    parser = argparse.ArgumentParser(description="SmartHui Application Runner")
+    parser.add_argument("--ui", type=str, default="QtWidgets", help="Specify the UI type to run (e.g., QtWidgets, QML)")
+    args = parser.parse_args()
+
+    if args.ui.lower() == "qml":
+        factory = QMLFactory()
+    else:
+        factory = QtWidgetsFactory()
     
-    # Apply global styles
-    APPLY_STYLES(app)
-    
-    window = MainWindow()
-    window.show()
-    
-    sys.exit(app.exec())
+    ui = factory.create_ui()
+    ui.run()
 
 if __name__ == "__main__":
     main()

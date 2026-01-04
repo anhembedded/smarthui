@@ -1,9 +1,9 @@
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                              QPushButton, QTableWidget, QTableWidgetItem, QHeaderView,
                              QDialog, QFormLayout, QLineEdit, QComboBox, QMessageBox,
                              QStackedWidget, QScrollArea, QFrame, QInputDialog, QSpinBox)
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor, QIcon
 import time
 import qtawesome as qta
 from datetime import datetime
@@ -42,12 +42,12 @@ class CycleSetupWizard(QDialog):
         # Navigation Buttons
         nav_layout = QHBoxLayout()
         self.btn_back = QPushButton(" Quay lại")
-        self.btn_back.setIcon(qta.icon('fa5s.arrow-left'))
+        self.btn_back.setIcon(QIcon(qta.icon('fa5s.arrow-left').pixmap(16, 16)))
         self.btn_back.clicked.connect(self.prev_step)
         self.btn_back.setEnabled(False)
         
         self.btn_next = QPushButton("Tiếp theo ")
-        self.btn_next.setIcon(qta.icon('fa5s.arrow-right', color='white'))
+        self.btn_next.setIcon(QIcon(qta.icon('fa5s.arrow-right', color='white').pixmap(16, 16)))
         self.btn_next.setLayoutDirection(Qt.LayoutDirection.RightToLeft)
         self.btn_next.setProperty("primary", True)
         self.btn_next.clicked.connect(self.next_step)
@@ -317,7 +317,7 @@ class BiddingDialog(QDialog):
         btn_cancel.clicked.connect(self.reject)
         
         self.btn_confirm = QPushButton("Xác Nhận Hốt Hụi")
-        self.btn_confirm.setIcon(qta.icon('fa5s.check', color='white'))
+        self.btn_confirm.setIcon(QIcon(qta.icon('fa5s.check', color='white').pixmap(16, 16)))
         self.btn_confirm.setProperty("primary", True)
         self.btn_confirm.clicked.connect(self.confirm)
         self.btn_confirm.setEnabled(False)
@@ -491,7 +491,7 @@ class HuiListTab(QWidget):
         lbl.setProperty("heading", True)
         
         btn_add = QPushButton("Tạo Dây Mới")
-        btn_add.setIcon(qta.icon('fa5s.plus', color='white'))
+        btn_add.setIcon(QIcon(qta.icon('fa5s.plus', color='white').pixmap(16, 16)))
         btn_add.setProperty("primary", True)
         btn_add.clicked.connect(self.open_create_dialog)
         
@@ -545,7 +545,7 @@ class HuiListTab(QWidget):
             
             # Action
             btn_detail = QPushButton("Chi tiết")
-            btn_detail.setIcon(qta.icon('fa5s.arrow-right', color='#475569'))
+            btn_detail.setIcon(QIcon(qta.icon('fa5s.arrow-right', color='#475569').pixmap(16, 16)))
             btn_detail.setCursor(Qt.CursorShape.PointingHandCursor)
             btn_detail.clicked.connect(lambda checked, grp=g: self.open_detail(grp))
             self.table_list.setCellWidget(row, 5, btn_detail)
@@ -622,7 +622,7 @@ class HuiListTab(QWidget):
         # Header Row
         top = QHBoxLayout()
         btn_back = QPushButton("Quay lại")
-        btn_back.setIcon(qta.icon('fa5s.arrow-left'))
+        btn_back.setIcon(QIcon(qta.icon('fa5s.arrow-left').pixmap(16, 16)))
         btn_back.setFixedWidth(100)
         btn_back.clicked.connect(self.go_back)
         
@@ -660,7 +660,7 @@ class HuiListTab(QWidget):
             lbl_status.setStyleSheet("color: #F59E0B; font-weight: bold;")
             
             btn_collect = QPushButton("Mở Hốt Hụi (Đấu)")
-            btn_collect.setIcon(qta.icon('fa5s.gavel', color='white'))
+            btn_collect.setIcon(QIcon(qta.icon('fa5s.gavel', color='white').pixmap(16, 16)))
             btn_collect.setProperty("primary", True)
             btn_collect.clicked.connect(lambda: self.do_collect(group))
             
@@ -744,7 +744,7 @@ class HuiListTab(QWidget):
             # Action Button
             if not is_winner and item.remainingAmount > 0:
                 btn_pay = QPushButton("Đóng")
-                btn_pay.setIcon(qta.icon('fa5s.money-bill-wave', color='#059669'))
+                btn_pay.setIcon(QIcon(qta.icon('fa5s.money-bill-wave', color='#059669').pixmap(16, 16)))
                 btn_pay.setStyleSheet("border: 1px solid #059669; color: #059669;")
                 btn_pay.clicked.connect(lambda checked, it=item, m=member: self.do_payment(group, it, m))
                 table.setCellWidget(i, 4, btn_pay)

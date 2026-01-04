@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QMainWindow, QTabWidget, QVBoxLayout, QWidget, QLabel
+from PySide6.QtWidgets import QMainWindow, QTabWidget, QVBoxLayout, QWidget, QLabel
 from ui.dashboard_tab import DashboardTab
 from ui.hui_list_tab import HuiListTab
 from ui.reports_tab import ReportsTab
