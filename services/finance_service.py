@@ -26,15 +26,9 @@ class FinanceService:
     @staticmethod
     def calculate_payout(group: HuiGroup, period: int, bid_amount: float, winner_id: str, all_transactions: List[Transaction]) -> PayoutDetail:
         # 1. Determine dead slots
-        dead_slots_count = 0
-        for t in all_transactions:
-            if t.huiGroupId == group.id and t.type == 'COLLECT' and t.period < period:
-                dead_slots_count += 1
+        dead_slots_count = len([t for t in all_transactions if t.huiGroupId == group.id and t.type == 'COLLECT' and t.period < period])
         
         N_dead = dead_slots_count
-        # Total members logic: group.members is a list of member IDs.
-        # But wait, group.members might contain duplicates if a member has multiple slots? 
-        # React code: group.members.length. So yes, it counts slots.
         N_live = len(group.members) - N_dead - 1
 
         V = group.amountPerShare
@@ -43,7 +37,6 @@ class FinanceService:
         # 2. Calculate amounts
         amount_per_live = V - B
         amount_per_dead = V
-
         total_pot = (N_live * amount_per_live) + (N_dead * amount_per_dead)
 
         # 3. Commission
@@ -52,18 +45,8 @@ class FinanceService:
         else:
             C = V * (group.commissionRate or 0) / 100
 
-        # 4. Deductions (old debts)
-        D = 0
-        for p in range(1, period):
-            winner_slots_in_group = group.members.count(winner_id)
-            
-            paid_amount = sum(t.amount for t in all_transactions 
-                              if t.huiGroupId == group.id and t.type == 'CONTRIBUTE' and t.period == p and t.memberId == winner_id)
-            
-            required_approx = winner_slots_in_group * V
-            
-            if paid_amount < required_approx:
-                D += (required_approx - paid_amount)
+        # 4. Deductions (old debts) - now calls the corrected debt function
+        D = FinanceService.get_member_total_debt(winner_id, [group], all_transactions)
         
         net_received = total_pot - C - D
 
@@ -86,21 +69,21 @@ class FinanceService:
             live_slots = total_slots - dead_slots
             
             if winner_id and member_id == winner_id:
-                live_slots = max(0, live_slots - 1)
+                # The winner of the current period does not contribute
+                live_slots = 0
+                dead_slots = 0
             
             required_amount = (dead_slots * amount_per_dead) + (live_slots * amount_per_live)
 
             paid_amount = sum(t.amount for t in all_transactions 
                               if t.huiGroupId == group.id and t.period == period and t.memberId == member_id and t.type == 'CONTRIBUTE')
             
-            remaining_amount = max(0, required_amount - paid_amount)
+            remaining_amount = required_amount - paid_amount
 
-            if required_amount == 0 and paid_amount == 0:
+            if required_amount == 0:
+                status = 'FULL' # Covers winner and those with no slots
+            elif remaining_amount <= 0:
                 status = 'FULL'
-            elif paid_amount >= required_amount and required_amount > 0:
-                status = 'FULL'
-            elif paid_amount > required_amount:
-                status = 'OVERPAID'
             elif paid_amount > 0:
                 status = 'PARTIAL'
             else:
@@ -109,7 +92,6 @@ class FinanceService:
             if total_slots > 0:
                 plan.append(ContributionDetail(member_id, dead_slots, live_slots, required_amount, paid_amount, remaining_amount, status))
         
-        # Sort: Debtors first
         plan.sort(key=lambda x: (0 if x.remainingAmount > 0 else 1, -x.remainingAmount))
         return plan
 
@@ -155,69 +137,35 @@ class FinanceService:
             if member_id not in group.members:
                 continue
             
-            # Count slots for this member
             slots_count = group.members.count(member_id)
             V = group.amountPerShare
             
-            # Past periods: required is slots * V
-            # (Wait, if they hốt in a past period, their required amount for that period was actually lower? 
-            # No, usually in ROSCA, the winner's "contribution" for the period they collect is 0 or handled as reduction.
-            # But in this app's logic, it seems they still "contribute"? No, look at calculate_payout deductions.
-            # It checks p in range(1, period).
-            
-            for p in range(1, group.currentPeriod + 1):
-                # Was this member the winner in this period or before?
-                # If they were winner in period X, then for p > X they are "dead".
-                # For p == X, they collected.
-                
-                # Check if they collected in period < p
-                collected_before = any(t.memberId == member_id and t.huiGroupId == group.id and t.type == 'COLLECT' and t.period < p 
-                                     for t in all_transactions)
-                
-                # Check if they are the winner in current p
-                is_winner_now = any(t.memberId == member_id and t.huiGroupId == group.id and t.type == 'COLLECT' and t.period == p 
-                                   for t in all_transactions)
-                
-                # Simple approximation: if they haven't hốt, they pay V-Bid. If they have hốt, they pay V.
-                # But we don't know the Bids of past periods easily without looking at transactions.
-                # For debt calculation, we can check the actual Transaction of type 'CONTRIBUTE' 
-                # vs what was required.
-                
-                # Let's simplify: Required = sum of (dead_slots * V + live_slots * (V-Bid))
-                # This is getting complex because the app doesn't store past Bids explicitly in the Group object.
-                # However, calculate_payout uses 'required_approx = winner_slots_in_group * V' for deductions.
-                
-                # Let's use a simpler heuristic for debt: 
-                # Debt = Required Contribution - Actual Contribution
-                
-                # For past periods, we can look at the Transactions of type 'COLLECT' to find the winner and bid.
-                past_collect = [t for t in all_transactions if t.huiGroupId == group.id and t.type == 'COLLECT' and t.period <= p]
-                
-                # If p is a past period, we should have a 'COLLECT' transaction for it.
-                winner_in_p = None
+            # Iterate through PAST periods only
+            for p in range(1, group.currentPeriod):
+                # Find the bid amount for this past period
                 bid_in_p = 0
-                for tc in past_collect:
-                    if tc.period == p:
-                        winner_in_p = tc.memberId
-                        bid_in_p = tc.bidAmount or 0
+                winner_in_p = None
+                for t in all_transactions:
+                    if t.huiGroupId == group.id and t.type == 'COLLECT' and t.period == p:
+                        bid_in_p = t.bidAmount or 0
+                        winner_in_p = t.memberId
                         break
                 
-                # If no winner was recorded for p (maybe it's current period and not yet hốt), assume bid=0
-                # Actually if it's past, there should be one.
-                
-                # Dead slots for this member in period p
-                my_dead_slots = len([t for t in all_transactions if t.huiGroupId == group.id and t.type == 'COLLECT' and t.period < p and t.memberId == member_id])
-                my_live_slots = slots_count - my_dead_slots
-                if winner_in_p == member_id:
-                    # The slot that hốt in this period p is neither live nor dead for contribution purpose?
-                    # Usually, the winner doesn't pay in the period they hốt.
-                    my_live_slots = max(0, my_live_slots - 1)
-                
-                required_in_p = (my_dead_slots * V) + (my_live_slots * (V - bid_in_p))
-                
+                # Determine member's status in this period (p)
+                my_dead_slots_in_p = len([t for t in all_transactions if t.huiGroupId == group.id and t.type == 'COLLECT' and t.period < p and t.memberId == member_id])
+                my_live_slots_in_p = slots_count - my_dead_slots_in_p
+
+                required_in_p = 0
+                if member_id == winner_in_p:
+                    # Winner does not contribute in the period they win
+                    required_in_p = 0
+                else:
+                    required_in_p = (my_dead_slots_in_p * V) + (my_live_slots_in_p * (V - bid_in_p))
+
                 paid_in_p = sum(t.amount for t in all_transactions if t.huiGroupId == group.id and t.memberId == member_id and t.type == 'CONTRIBUTE' and t.period == p)
                 
-                if paid_in_p < required_in_p:
-                    total_debt += (required_in_p - paid_in_p)
+                shortfall = required_in_p - paid_in_p
+                if shortfall > 0:
+                    total_debt += shortfall
                     
         return total_debt
