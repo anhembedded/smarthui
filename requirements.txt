@@ -4,3 +4,5 @@ pandas
 openpyxl
 qtawesome
 websockets
+pytest
+pytest-mock
