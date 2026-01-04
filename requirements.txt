@@ -1,0 +1,6 @@
+PyQt6
+matplotlib
+pandas
+openpyxl
+qtawesome
+websockets
