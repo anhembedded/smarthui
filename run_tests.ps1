@@ -18,22 +18,25 @@ if (-not [string]::IsNullOrEmpty($path)) {
     if (Test-Path -Path $path) {
         $testPath = $path
         Write-Host "Running tests for specific path: $testPath" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "Error: The specified path '$path' does not exist." -ForegroundColor Red
         exit 1
     }
-} else {
+}
+else {
     Write-Host "Running all tests..." -ForegroundColor Green
 }
 
 # 4. Execute pytest
-# Use -v for verbose output and --ignore to skip the venv directory if needed
-pytest -v $testPath
+# Using python -m pytest adds the current directory to sys.path
+python -m pytest -v $testPath
 
 # 5. Check the exit code of the last command
 if ($LASTEXITCODE -eq 0) {
     Write-Host "All tests passed successfully!" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "Some tests failed. Exit code: $LASTEXITCODE" -ForegroundColor Red
 }
 
